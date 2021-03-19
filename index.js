@@ -66,6 +66,7 @@ function createPanZoom(domElement, options) {
   var zoomDoubleClickSpeed = typeof options.zoomDoubleClickSpeed === 'number' ? options.zoomDoubleClickSpeed : defaultDoubleTapZoomSpeed;
   var beforeWheel = options.beforeWheel || noop;
   var beforeMouseDown = options.beforeMouseDown || noop;
+  var beforeDoubleClick = options.beforeDoubleClick || noop;
   var speed = typeof options.zoomSpeed === 'number' ? options.zoomSpeed : defaultZoomSpeed;
   var transformOrigin = parseTransformOrigin(options.transformOrigin);
   var textSelection = options.enableTextSelection ? fakeTextSelectorInterceptor : domTextSelectionInterceptor;
@@ -604,18 +605,6 @@ function createPanZoom(domElement, options) {
     e.preventDefault();
   }
 
-  function beforeDoubleClick(e) {
-    // TODO: Need to unify this filtering names. E.g. use `beforeDoubleClick``
-    if (options.onDoubleClick && !options.onDoubleClick(e)) {
-      // if they return `false` from onTouch, we don't want to stop
-      // events propagation. Fixes https://github.com/anvaka/panzoom/issues/46
-      return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
   function handleSingleFingerTouch(e) {
     var touch = e.touches[0];
     var offset = getOffsetXY(touch);
@@ -719,7 +708,18 @@ function createPanZoom(domElement, options) {
   }
 
   function onDoubleClick(e) {
-    beforeDoubleClick(e);
+    // if client does not want to handle this event - just ignore the call
+    var result = beforeDoubleClick(e);
+    if (result) return;
+
+    // support the legacy option onDoubleClick
+    if (result != false && (!options.onDoubleClick || options.onDoubleClick(e))) {
+      // if they return `false` from beforeDoubleClick, we don't want to stop
+      // events propagation. Fixes https://github.com/anvaka/panzoom/issues/46
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     var offset = getOffsetXY(e);
     if (transformOrigin) {
       // TODO: looks like this is duplicated in the file.

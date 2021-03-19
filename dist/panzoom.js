@@ -67,6 +67,7 @@ function createPanZoom(domElement, options) {
   var zoomDoubleClickSpeed = typeof options.zoomDoubleClickSpeed === 'number' ? options.zoomDoubleClickSpeed : defaultDoubleTapZoomSpeed;
   var beforeWheel = options.beforeWheel || noop;
   var beforeMouseDown = options.beforeMouseDown || noop;
+  var beforeDoubleClick = options.beforeDoubleClick || noop;
   var speed = typeof options.zoomSpeed === 'number' ? options.zoomSpeed : defaultZoomSpeed;
   var transformOrigin = parseTransformOrigin(options.transformOrigin);
   var textSelection = options.enableTextSelection ? fakeTextSelectorInterceptor : domTextSelectionInterceptor;
@@ -442,7 +443,7 @@ function createPanZoom(domElement, options) {
   }
 
   function smoothMoveTo(x, y){
-    internalMoveBy(x - transform.x, y - transform.y, true)
+    internalMoveBy(x - transform.x, y - transform.y, true);
   }
 
   function internalMoveBy(dx, dy, smooth) {
@@ -605,18 +606,6 @@ function createPanZoom(domElement, options) {
     e.preventDefault();
   }
 
-  function beforeDoubleClick(e) {
-    // TODO: Need to unify this filtering names. E.g. use `beforeDoubleClick``
-    if (options.onDoubleClick && !options.onDoubleClick(e)) {
-      // if they return `false` from onTouch, we don't want to stop
-      // events propagation. Fixes https://github.com/anvaka/panzoom/issues/46
-      return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
   function handleSingleFingerTouch(e) {
     var touch = e.touches[0];
     var offset = getOffsetXY(touch);
@@ -720,7 +709,18 @@ function createPanZoom(domElement, options) {
   }
 
   function onDoubleClick(e) {
-    beforeDoubleClick(e);
+    // if client does not want to handle this event - just ignore the call
+    var result = beforeDoubleClick(e);
+    if (result) return;
+
+    // support the legacy option onDoubleClick
+    if (result != false && (!options.onDoubleClick || options.onDoubleClick(e))) {
+      // if they return `false` from beforeDoubleClick, we don't want to stop
+      // events propagation. Fixes https://github.com/anvaka/panzoom/issues/46
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
     var offset = getOffsetXY(e);
     if (transformOrigin) {
       // TODO: looks like this is duplicated in the file.
@@ -1024,8 +1024,8 @@ function autoRun() {
   function collectOptions(script) {
     var attrs = script.attributes;
     var options = {};
-    for (var i = 0; i < attrs.length; ++i) {
-      var attr = attrs[i];
+    for (var j = 0; j < attrs.length; ++j) {
+      var attr = attrs[j];
       var nameValue = getPanzoomAttributeNameValue(attr);
       if (nameValue) {
         options[nameValue.name] = nameValue.value;
@@ -1102,14 +1102,14 @@ function disabled(e) {
 function noop() {}
 
 },{}],3:[function(require,module,exports){
-module.exports = makeDomController
+module.exports = makeDomController;
 
 module.exports.canAttach = isDomElement;
 
 function makeDomController(domElement, options) {
   var elementValid = isDomElement(domElement); 
   if (!elementValid) {
-    throw new Error('panzoom requires DOM element to be attached to the DOM tree')
+    throw new Error('panzoom requires DOM element to be attached to the DOM tree');
   }
 
   var owner = domElement.parentElement;
@@ -1123,12 +1123,12 @@ function makeDomController(domElement, options) {
     getBBox: getBBox,
     getOwner: getOwner,
     applyTransform: applyTransform,
-  }
+  };
   
-  return api
+  return api;
 
   function getOwner() {
-    return owner
+    return owner;
   }
 
   function getBBox() {
@@ -1138,7 +1138,7 @@ function makeDomController(domElement, options) {
       top: 0,
       width: domElement.clientWidth,
       height: domElement.clientHeight
-    }
+    };
   }
 
   function applyTransform(transform) {
@@ -1147,7 +1147,7 @@ function makeDomController(domElement, options) {
     domElement.style.transform = 'matrix(' +
       transform.scale + ', 0, 0, ' +
       transform.scale + ', ' +
-      transform.x + ', ' + transform.y + ')'
+      transform.x + ', ' + transform.y + ')';
   }
 }
 
@@ -1290,23 +1290,23 @@ function getRequestAnimationFrame() {
 
   return function (handler) {
     return setTimeout(handler, 16);
-  }
+  };
 }
 },{}],5:[function(require,module,exports){
-module.exports = makeSvgController
+module.exports = makeSvgController;
 module.exports.canAttach = isSVGElement;
 
 function makeSvgController(svgElement, options) {
   if (!isSVGElement(svgElement)) {
-    throw new Error('svg element is required for svg.panzoom to work')
+    throw new Error('svg element is required for svg.panzoom to work');
   }
 
-  var owner = svgElement.ownerSVGElement
+  var owner = svgElement.ownerSVGElement;
   if (!owner) {
     throw new Error(
       'Do not apply panzoom to the root <svg> element. ' +
       'Use its child instead (e.g. <g></g>). ' +
-      'As of March 2016 only FireFox supported transform on the root element')
+      'As of March 2016 only FireFox supported transform on the root element');
   }
 
   if (!options.disableKeyboardInteraction) {
@@ -1319,22 +1319,22 @@ function makeSvgController(svgElement, options) {
     getOwner: getOwner,
     applyTransform: applyTransform,
     initTransform: initTransform
-  }
+  };
   
-  return api
+  return api;
 
   function getOwner() {
-    return owner
+    return owner;
   }
 
   function getBBox() {
-    var bbox =  svgElement.getBBox()
+    var bbox =  svgElement.getBBox();
     return {
       left: bbox.x,
       top: bbox.y,
       width: bbox.width,
       height: bbox.height,
-    }
+    };
   }
 
   function getScreenCTM() {
@@ -1348,11 +1348,11 @@ function makeSvgController(svgElement, options) {
   }
 
   function initTransform(transform) {
-    var screenCTM = svgElement.getCTM()
+    var screenCTM = svgElement.getCTM();
 
     // The above line returns null on Firefox
     if (screenCTM === null) {
-      screenCTM = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix()
+      screenCTM = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
     }
 
     transform.x = screenCTM.e;
@@ -1365,7 +1365,7 @@ function makeSvgController(svgElement, options) {
     svgElement.setAttribute('transform', 'matrix(' +
       transform.scale + ' 0 0 ' +
       transform.scale + ' ' +
-      transform.x + ' ' + transform.y + ')')
+      transform.x + ' ' + transform.y + ')');
   }
 }
 
