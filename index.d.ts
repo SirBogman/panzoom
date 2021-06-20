@@ -27,6 +27,7 @@ declare module "panzoom" {
     bounds?: boolean | Bounds;
     maxZoom?: number;
     minZoom?: number;
+    minimumDistance?: number;
     boundsPadding?: number;
     zoomDoubleClickSpeed?: number;
     zoomSpeed?: number;
@@ -50,7 +51,6 @@ declare module "panzoom" {
 
   export interface PanZoom {
     dispose: () => void;
-    minimumDistance?: number;
     moveBy: (dx: number, dy: number, smooth: boolean) => void;
     moveTo: (x: number, y: number) => void;
     smoothMoveTo: (x: number, y: number) => void;
