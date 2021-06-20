@@ -49,6 +49,7 @@ declare module "panzoom" {
 
   export interface PanZoom {
     dispose: () => void;
+    minimumDistance?: number;
     moveBy: (dx: number, dy: number, smooth: boolean) => void;
     moveTo: (x: number, y: number) => void;
     smoothMoveTo: (x: number, y: number) => void;

@@ -67,6 +67,8 @@ function createPanZoom(domElement, options) {
   var beforeWheel = options.beforeWheel || noop;
   var beforeMouseDown = options.beforeMouseDown || noop;
   var beforeDoubleClick = options.beforeDoubleClick || noop;
+  var minimumDistance = options.minimumDistance ?? 0;
+  var minimumDistanceSquared = minimumDistance * minimumDistance;
   var speed = typeof options.zoomSpeed === 'number' ? options.zoomSpeed : defaultZoomSpeed;
   var transformOrigin = parseTransformOrigin(options.transformOrigin);
   var textSelection = options.enableTextSelection ? fakeTextSelectorInterceptor : domTextSelectionInterceptor;
@@ -640,9 +642,11 @@ function createPanZoom(domElement, options) {
       var dx = point.x - mouseX;
       var dy = point.y - mouseY;
 
-      if (dx !== 0 && dy !== 0) {
-        triggerPanStart();
+      if (!panstartFired && dx * dx + dy * dy < minimumDistanceSquared) {
+        return;
       }
+
+      triggerPanStart();
       mouseX = point.x;
       mouseY = point.y;
       internalMoveBy(dx, dy);
@@ -683,6 +687,7 @@ function createPanZoom(domElement, options) {
       mouseX = point.x;
       mouseY = point.y;
     } else {
+      // No more touches.
       var now = new Date();
       if (now - lastTouchEndTime < doubleTapSpeedInMS) {
         if (transformOrigin) {
@@ -695,6 +700,10 @@ function createPanZoom(domElement, options) {
       }
 
       lastTouchEndTime = now;
+
+      if (panstartFired) {
+        e.preventDefault();
+      }
 
       triggerPanEnd();
       releaseTouches();
@@ -765,13 +774,16 @@ function createPanZoom(domElement, options) {
     // no need to worry about mouse events when touch is happening
     if (touchInProgress) return;
 
-    triggerPanStart();
-
     var offset = getOffsetXY(e);
     var point = transformToScreen(offset.x, offset.y);
     var dx = point.x - mouseX;
     var dy = point.y - mouseY;
 
+    if (!panstartFired && dx * dx + dy * dy < minimumDistanceSquared) {
+      return;
+    }
+
+    triggerPanStart();
     mouseX = point.x;
     mouseY = point.y;
 
