@@ -23,7 +23,7 @@ declare module "panzoom" {
   }
 
   export interface PanZoomOptions {
-    filterKey?: () => boolean;
+    filterKey?: (e: KeyboardEvent, x: number, y: number, z: number) => boolean;
     bounds?: boolean | Bounds;
     maxZoom?: number;
     minZoom?: number;
