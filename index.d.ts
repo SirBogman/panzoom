@@ -34,9 +34,10 @@ declare module "panzoom" {
     initialY?: number,
     initialZoom?: number,
     pinchSpeed?: number;
-    beforeWheel?: (e: WheelEvent) => void;
-    beforeMouseDown?: (e: MouseEvent) => void;
-    beforeDoubleClick?: (e: MouseEvent) => void;
+    beforeWheel?: (e: WheelEvent) => boolean | null | undefined;
+    beforeMouseDown?: (e: MouseEvent) => boolean | null | undefined;
+    beforeDoubleClick?: (e: MouseEvent) => boolean | null | undefined;
+    beforeTouchStart?: (e: TouchEvent) => boolean | null | undefined;
     autocenter?: boolean;
     onTouch?: (e: TouchEvent) => void;
     onDoubleClick?: (e: Event) => void;

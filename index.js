@@ -67,6 +67,7 @@ function createPanZoom(domElement, options) {
   var beforeWheel = options.beforeWheel || noop;
   var beforeMouseDown = options.beforeMouseDown || noop;
   var beforeDoubleClick = options.beforeDoubleClick || noop;
+  var beforeTouchStart = options.beforeTouchStart || noop;
   var minimumDistance = options.minimumDistance ?? 0;
   var minimumDistanceSquared = minimumDistance * minimumDistance;
   var speed = typeof options.zoomSpeed === 'number' ? options.zoomSpeed : defaultZoomSpeed;
@@ -582,8 +583,17 @@ function createPanZoom(domElement, options) {
   }
 
   function onTouch(e) {
-    // let the override the touch behavior
-    beforeTouch(e);
+    // if client does not want to handle this event - just ignore the call
+    var result = beforeTouchStart(e);
+    if (result) return;
+
+    // support the legacy option onTouch
+    if (result !== false && (!options.onTouch || options.onTouch(e))) {
+      // if they return `false` from beforeTouchStart, we don't want to stop
+      // events propagation. Fixes https://github.com/anvaka/panzoom/issues/46
+      e.preventDefault();
+      e.stopPropagation();
+    }
 
     if (e.touches.length === 1) {
       return handleSingleFingerTouch(e, e.touches[0]);
@@ -593,18 +603,6 @@ function createPanZoom(domElement, options) {
       multiTouch = true;
       startTouchListenerIfNeeded();
     }
-  }
-
-  function beforeTouch(e) {
-    // TODO: Need to unify this filtering names. E.g. use `beforeTouch`
-    if (options.onTouch && !options.onTouch(e)) {
-      // if they return `false` from onTouch, we don't want to stop
-      // events propagation. Fixes https://github.com/anvaka/panzoom/issues/12
-      return;
-    }
-
-    e.stopPropagation();
-    e.preventDefault();
   }
 
   function handleSingleFingerTouch(e) {
@@ -722,7 +720,7 @@ function createPanZoom(domElement, options) {
     if (result) return;
 
     // support the legacy option onDoubleClick
-    if (result != false && (!options.onDoubleClick || options.onDoubleClick(e))) {
+    if (result !== false && (!options.onDoubleClick || options.onDoubleClick(e))) {
       // if they return `false` from beforeDoubleClick, we don't want to stop
       // events propagation. Fixes https://github.com/anvaka/panzoom/issues/46
       e.preventDefault();
