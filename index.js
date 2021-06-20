@@ -755,7 +755,7 @@ function createPanZoom(domElement, options) {
     // We need to listen on document itself, since mouse can go outside of the
     // window, and we will loose it
     document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('mouseup', onMouseUp, { capture: true });
     textSelection.capture(e.target || e.srcElement);
 
     return false;
@@ -778,15 +778,19 @@ function createPanZoom(domElement, options) {
     internalMoveBy(dx, dy);
   }
 
-  function onMouseUp() {
+  function onMouseUp(e) {
     textSelection.release();
+    if (panstartFired) {
+      e.preventDefault();
+    }
+
     triggerPanEnd();
     releaseDocumentMouse();
   }
 
   function releaseDocumentMouse() {
     document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('mouseup', onMouseUp, { capture: true });
     panstartFired = false;
   }
 
