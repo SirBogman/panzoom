@@ -18,8 +18,12 @@ declare module "panzoom" {
   }
 
   export interface PanZoomController {
+    getBBox?: () => { left: number, top: number, width: number, height: number };
     getOwner: () => Element;
+    getKeyboardOwner?: () => Element;
+    getScreenCTM?: () => { a: number, d: number, e: number, f: number };
     applyTransform: (transform: Transform) => void;
+    initTransform?: (transform: Transform) => void;
   }
 
   export interface PanZoomOptions {

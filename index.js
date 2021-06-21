@@ -44,6 +44,8 @@ function createPanZoom(domElement, options) {
     );
   }
   var owner = panController.getOwner();
+  var keyboardOwner = panController.getKeyboardOwner ? panController.getKeyboardOwner() : owner;
+
   // just to avoid GC pressure, every time we do intermediate transform
   // we return this object. For internal use only. Never give it back to the consumer of this library
   var storedCTMResult = { x: 0, y: 0 };
@@ -480,24 +482,24 @@ function createPanZoom(domElement, options) {
   }
 
   function listenForEvents() {
-    owner.addEventListener('mousedown', onMouseDown, { passive: false });
-    owner.addEventListener('dblclick', onDoubleClick, { passive: false });
-    owner.addEventListener('touchstart', onTouch, { passive: false });
-    owner.addEventListener('keydown', onKeyDown, { passive: false });
+    keyboardOwner.addEventListener('mousedown', onMouseDown, { passive: false });
+    keyboardOwner.addEventListener('dblclick', onDoubleClick, { passive: false });
+    keyboardOwner.addEventListener('touchstart', onTouch, { passive: false });
+    keyboardOwner.addEventListener('keydown', onKeyDown, { passive: false });
 
     // Need to listen on the owner container, so that we are not limited
     // by the size of the scrollable domElement
-    wheel.addWheelListener(owner, onMouseWheel, { passive: false });
+    wheel.addWheelListener(keyboardOwner, onMouseWheel, { passive: false });
 
     makeDirty();
   }
 
   function releaseEvents() {
-    wheel.removeWheelListener(owner, onMouseWheel);
-    owner.removeEventListener('mousedown', onMouseDown);
-    owner.removeEventListener('keydown', onKeyDown);
-    owner.removeEventListener('dblclick', onDoubleClick);
-    owner.removeEventListener('touchstart', onTouch);
+    wheel.removeWheelListener(keyboardOwner, onMouseWheel);
+    keyboardOwner.removeEventListener('mousedown', onMouseDown);
+    keyboardOwner.removeEventListener('keydown', onKeyDown);
+    keyboardOwner.removeEventListener('dblclick', onDoubleClick);
+    keyboardOwner.removeEventListener('touchstart', onTouch);
 
     if (frameAnimation) {
       window.cancelAnimationFrame(frameAnimation);
